@@ -1,1 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>在线模拟面试</title>
+  </head>
+  <body>
+    <h1>在线模拟面试</h1>
+    <button id="start-interview">开始面试</button>
+    <button id="end-interview" disabled>结束面试</button>
+    <div id="chat-window" style="border: 1px solid; height: 300px; overflow-y: scroll; padding: 10px;">
+    </div>
+    <input id="user-input" type="text" disabled />
+    <button id="send-answer" disabled>发送回答</button>
+    <script>
+      const startInterviewButton = document.getElementById("start-interview");
+      const endInterviewButton = document.getElementById("end-interview");
+      const chatWindow = document.getElementById("chat-window");
+      const userInput = document.getElementById("user-input");
+      const sendAnswerButton = document.getElementById("send-answer");
+
+      async function callAPI(url, data) {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        return await response.json();
+      }
+
+      function scrollToBottom() {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+
+      startInterviewButton.addEventListener("click", async () => {
+        const prompt = "开始面试";
+        const data = { prompt };
+        const result = await callAPI("/start-interview", data);
+
+        chatWindow.innerHTML += `<p><b>面试官：</b>${result.question}</p>`;
+        startInterviewButton.disabled = true;
+        endInterviewButton.disabled = false;
+        userInput.disabled = false;
+        sendAnswerButton.disabled = false;
+        scrollToBottom();
+      });
+
+      sendAnswerButton.addEventListener("click", async () => {
+        const answer = userInput.value;
+        chatWindow.innerHTML += `<p><b>你：</b>${answer}</p>`;
+        scrollToBottom();
+
+        const prompt = answer;
+        const data = { prompt };
+        const result = await callAPI("/next-question", data);
+
+        chatWindow.innerHTML += `<p><b>面试官：</b>${result.question}</p>`;
+        userInput.value = "";
+        scrollToBottom();
+      });
+
+      endInterviewButton.addEventListener("click", async () => {
+        const report = await callAPI("/generate-report");
+        window.location.href = "/report";
+      });
+    </script>
+  </body>
+</html>
 
